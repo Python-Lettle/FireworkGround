@@ -1,0 +1,5 @@
+{
+  "name": "Lumina Fireworks",
+  "description": "An interactive firework simulation where users can launch colorful fireworks by clicking on the screen. Features realistic physics, particle trails, and responsive design.",
+  "requestFramePermissions": []
+}
