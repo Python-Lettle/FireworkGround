@@ -234,7 +234,7 @@ class Firework {
 }
 
 interface FireworkCanvasProps {
-  onLaunch: () => void;
+  onLaunch: (sx: number, sy: number, tx: number, ty: number, hue: number) => void;
   onExplode: () => void;
 }
 
@@ -260,7 +260,6 @@ export const FireworkCanvas = forwardRef<FireworkCanvasHandle, FireworkCanvasPro
     launchRocket: (sx: number, sy: number, tx: number, ty: number, hue?: number) => {
       fireworksRef.current.push(new Firework(sx, sy, tx, ty, hue));
       soundManagerRef.current?.playLaunch();
-      onLaunch();
     }
   }));
 
@@ -369,9 +368,13 @@ export const FireworkCanvas = forwardRef<FireworkCanvasHandle, FireworkCanvasPro
       if (!canvas) return;
       const startX = (canvas.clientWidth / 2) + random(-50, 50);
       const startY = canvas.clientHeight;
-      fireworksRef.current.push(new Firework(startX, startY, x, y));
+      const hue = random(HUE_START, HUE_END);
+      
+      fireworksRef.current.push(new Firework(startX, startY, x, y, hue));
       soundManagerRef.current?.playLaunch();
-      onLaunch();
+      
+      // Notify parent for multiplayer sync
+      onLaunch(startX, startY, x, y, hue);
   };
 
   // --- Pointer Event Handlers for Long Press ---

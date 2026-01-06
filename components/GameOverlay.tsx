@@ -55,7 +55,7 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({ players, messages, onS
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
               <UsersIcon />
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              Players ({players.length})
+              在线玩家 ({players.length})
             </h2>
             <div className="text-slate-400">
               {isPlayerListOpen ? <MinimizeIcon /> : <MaximizeIcon />}
@@ -72,7 +72,7 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({ players, messages, onS
                       style={{ backgroundColor: player.color }}
                     ></div>
                     <span className={`${player.isCurrentUser ? 'text-white font-semibold' : 'text-slate-300'}`}>
-                      {player.name} {player.isCurrentUser && '(You)'}
+                      {player.name} {player.isCurrentUser && '(你)'}
                     </span>
                   </div>
                 </li>
@@ -93,7 +93,7 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({ players, messages, onS
           >
              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
                <ChatIcon />
-               <span>Chat Room</span>
+               <span>聊天室</span>
              </div>
              <div className="text-slate-400">
                {isChatOpen ? <MinimizeIcon /> : <MaximizeIcon />}
@@ -106,7 +106,7 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({ players, messages, onS
             <div className="h-48 overflow-y-auto p-4 space-y-3 custom-scrollbar flex flex-col">
               {messages.length === 0 && (
                 <div className="text-slate-500 text-xs text-center italic mt-auto">
-                  Room created. Waiting for messages...
+                  房间已创建，等待消息...
                 </div>
               )}
               {messages.map((msg) => (
@@ -129,7 +129,7 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({ players, messages, onS
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Type a message..."
+                placeholder="说点什么..."
                 className="flex-1 bg-transparent text-white placeholder-slate-500 px-3 py-2 rounded-lg focus:outline-none focus:bg-white/5 transition-colors text-sm"
                 onKeyDown={(e) => e.stopPropagation()} 
               />
@@ -138,7 +138,7 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({ players, messages, onS
                 disabled={!inputText.trim()}
                 className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
-                Send
+                发送
               </button>
             </form>
           </div>
