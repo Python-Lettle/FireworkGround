@@ -109,11 +109,11 @@ const App: React.FC = () => {
     // 3. 模拟其他玩家发射烟花 (Bot behavior)
     const fireworkInterval = setInterval(() => {
       if (Math.random() > 0.7) {
-        // Random launch position
-        const sx = Math.random() * window.innerWidth;
-        const sy = window.innerHeight;
-        const tx = Math.random() * window.innerWidth;
-        const ty = window.innerHeight * 0.2 + Math.random() * window.innerHeight * 0.5;
+        // Random launch position (using relative coordinates 0-1)
+        const sx = 0.5 + Math.random() * 0.1 - 0.05;
+        const sy = 1.0;
+        const tx = Math.random();
+        const ty = 0.2 + Math.random() * 0.5;
         const hue = Math.random() * 360;
         
         canvasRef.current?.launchRocket(sx, sy, tx, ty, hue);
@@ -222,8 +222,6 @@ const App: React.FC = () => {
   // ----------------------------------------------------------------
 
   const handleFireworkLaunch = useCallback((sx: number, sy: number, tx: number, ty: number, hue: number) => {
-    // Mock Mode 不需要在此处做任何事，因为本地点击事件已经由 Canvas 处理了视觉效果。
-    // 我们只需要处理 WebSocket 模式的广播。
     if (!USE_MOCK_DATA && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'firework_launch',

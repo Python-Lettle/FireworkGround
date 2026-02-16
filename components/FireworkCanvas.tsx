@@ -103,13 +103,17 @@ class Particle {
   color: number; // Hue
   decay: number;
   coordinates: Coordinate[];
+  canvasWidth: number;
+  canvasHeight: number;
 
-  constructor(x: number, y: number, hue: number) {
+  constructor(x: number, y: number, hue: number, canvasWidth: number, canvasHeight: number) {
     this.x = x;
     this.y = y;
+    this.canvasWidth = canvasWidth;
+    this.canvasHeight = canvasHeight;
     const angle = random(0, Math.PI * 2);
     // Varied speed ensures explosion looks spherical but with depth
-    const speed = random(1, 9);
+    const speed = random(0.005, 0.02);
     // Add some friction to initial velocity
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
@@ -130,18 +134,21 @@ class Particle {
 
     this.vx *= FRICTION;
     this.vy *= FRICTION;
-    this.vy += GRAVITY;
+    this.vy += GRAVITY * 0.01;
     this.x += this.vx;
     this.y += this.vy;
     this.alpha -= this.decay;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    const toPixelX = (x: number) => x * this.canvasWidth;
+    const toPixelY = (y: number) => y * this.canvasHeight;
+    
     ctx.beginPath();
     // Draw a smooth line through previous coordinates
-    ctx.moveTo(this.coordinates[0].x, this.coordinates[0].y);
+    ctx.moveTo(toPixelX(this.coordinates[0].x), toPixelY(this.coordinates[0].y));
     for(let i = 1; i < this.coordinates.length; i++) {
-        ctx.lineTo(this.coordinates[i].x, this.coordinates[i].y);
+        ctx.lineTo(toPixelX(this.coordinates[i].x), toPixelY(this.coordinates[i].y));
     }
     
     ctx.strokeStyle = `hsla(${this.color}, 100%, 60%, ${this.alpha})`;
@@ -152,7 +159,7 @@ class Particle {
     // Sparkle effect
     if (Math.random() > 0.8) {
       ctx.fillStyle = `hsla(${this.color}, 100%, 90%, ${this.alpha})`;
-      ctx.fillRect(this.x - 1, this.y - 1, 2, 2);
+      ctx.fillRect(toPixelX(this.x) - 1, toPixelY(this.y) - 1, 2, 2);
     }
   }
 }
@@ -173,15 +180,19 @@ class Firework {
   brightness: number;
   hue: number;
   targetRadius: number;
+  canvasWidth: number;
+  canvasHeight: number;
 
-  constructor(sx: number, sy: number, tx: number, ty: number, hue?: number) {
+  constructor(sx: number, sy: number, tx: number, ty: number, hue?: number, canvasWidth?: number, canvasHeight?: number) {
     this.x = sx;
     this.y = sy;
     this.sx = sx;
     this.sy = sy;
     this.tx = tx;
     this.ty = ty;
-
+    this.canvasWidth = canvasWidth || 1;
+    this.canvasHeight = canvasHeight || 1;
+    
     this.distanceToTarget = Math.sqrt(Math.pow(tx - sx, 2) + Math.pow(ty - sy, 2));
     this.distanceTraveled = 0;
     
@@ -191,12 +202,12 @@ class Firework {
     }
 
     this.angle = Math.atan2(ty - sy, tx - sx);
-    this.speed = 2;
+    this.speed = 0.02;
     this.acceleration = 1.05;
     this.brightness = random(50, 70);
     // Allow custom hue for multiplayer colors, or random
     this.hue = hue !== undefined ? hue : random(HUE_START, HUE_END);
-    this.targetRadius = 1;
+    this.targetRadius = 0.01;
   }
 
   update(index: number): boolean {
@@ -218,16 +229,19 @@ class Firework {
     }
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, canvasWidth: number, canvasHeight: number) {
+    const toPixelX = (x: number) => x * canvasWidth;
+    const toPixelY = (y: number) => y * canvasHeight;
+    
     ctx.beginPath();
-    ctx.moveTo(this.coordinates[this.coordinates.length - 1].x, this.coordinates[this.coordinates.length - 1].y);
-    ctx.lineTo(this.x, this.y);
+    ctx.moveTo(toPixelX(this.coordinates[this.coordinates.length - 1].x), toPixelY(this.coordinates[this.coordinates.length - 1].y));
+    ctx.lineTo(toPixelX(this.x), toPixelY(this.y));
     ctx.strokeStyle = `hsl(${this.hue}, 100%, ${this.brightness}%)`;
     ctx.lineWidth = 3; 
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(this.tx, this.ty, this.targetRadius, 0, Math.PI * 2);
+    ctx.arc(toPixelX(this.tx), toPixelY(this.ty), this.targetRadius * Math.min(canvasWidth, canvasHeight), 0, Math.PI * 2);
     ctx.fillStyle = `hsla(${this.hue}, 100%, 50%, 0.1)`;
     ctx.fill();
   }
@@ -258,7 +272,7 @@ export const FireworkCanvas = forwardRef<FireworkCanvasHandle, FireworkCanvasPro
   // Expose method to parent for multiplayer events
   useImperativeHandle(ref, () => ({
     launchRocket: (sx: number, sy: number, tx: number, ty: number, hue?: number) => {
-      fireworksRef.current.push(new Firework(sx, sy, tx, ty, hue));
+      fireworksRef.current.push(new Firework(sx, sy, tx, ty, hue, canvasRef.current?.clientWidth || 1, canvasRef.current?.clientHeight || 1));
       soundManagerRef.current?.playLaunch();
     }
   }));
@@ -325,13 +339,13 @@ export const FireworkCanvas = forwardRef<FireworkCanvasHandle, FireworkCanvasPro
     while (i--) {
       const firework = fireworksRef.current[i];
       const exploded = firework.update(i);
-      firework.draw(ctx);
+      firework.draw(ctx, width, height);
 
       if (exploded) {
         // Explosion logic
         const particleCount = random(30, 80);
         for (let j = 0; j < particleCount; j++) {
-            particlesRef.current.push(new Particle(firework.tx, firework.ty, firework.hue));
+            particlesRef.current.push(new Particle(firework.tx, firework.ty, firework.hue, width, height));
         }
         soundManagerRef.current?.playExplosion();
         fireworksRef.current.splice(i, 1);
@@ -365,16 +379,16 @@ export const FireworkCanvas = forwardRef<FireworkCanvasHandle, FireworkCanvasPro
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
     return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: (e.clientX - rect.left) / rect.width,
+        y: (e.clientY - rect.top) / rect.height
     };
   };
 
   const launchAtPosition = (x: number, y: number) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const startX = (canvas.clientWidth / 2) + random(-50, 50);
-      const startY = canvas.clientHeight;
+      const startX = 0.5 + random(-0.05, 0.05);
+      const startY = 1.0;
       const hue = random(HUE_START, HUE_END);
       
       fireworksRef.current.push(new Firework(startX, startY, x, y, hue));
