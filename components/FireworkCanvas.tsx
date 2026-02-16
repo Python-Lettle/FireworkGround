@@ -288,6 +288,10 @@ export const FireworkCanvas = forwardRef<FireworkCanvasHandle, FireworkCanvasPro
 
     window.addEventListener('resize', handleResize);
     handleResize();
+    
+    requestAnimationFrame(() => {
+        handleResize();
+    });
 
     return () => {
       window.removeEventListener('resize', handleResize);

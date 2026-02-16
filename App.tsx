@@ -1,13 +1,14 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { FireworkCanvas, FireworkCanvasHandle } from './components/FireworkCanvas';
 import { GameOverlay } from './components/GameOverlay';
+import { NameInput } from './components/NameInput';
 import { Player, ChatMessage } from './types';
 
 // ==========================================
 // 配置文件 / CONFIGURATION
 // ==========================================
-const USE_MOCK_DATA = true; // 切换为 false 以启用真实 WebSocket 连接
-const WS_URL = 'ws://localhost:3000/socket'; // 后端 WebSocket 地址
+const USE_MOCK_DATA = false; // 切换为 false 以启用真实 WebSocket 连接
+const WS_URL = 'ws://localhost:9000/socket'; // 后端 WebSocket 地址
 
 // ==========================================
 // 辅助函数 / HELPERS
@@ -33,12 +34,28 @@ const App: React.FC = () => {
   const wsRef = useRef<WebSocket | null>(null);
   
   // State
-  const [currentUser, setCurrentUser] = useState<Player>(() => ({
-    id: Math.random().toString(36).substr(2, 9),
-    name: getRandomName(),
-    color: getRandomColor(),
-    isCurrentUser: true,
-  }));
+  const [currentUser, setCurrentUser] = useState<Player>(() => {
+    const savedName = localStorage.getItem('fireworks_player_name');
+    const savedColor = localStorage.getItem('fireworks_player_color');
+    return {
+      id: Math.random().toString(36).substr(2, 9),
+      name: savedName || getRandomName(),
+      color: savedColor || getRandomColor(),
+      isCurrentUser: true,
+    };
+  });
+  const [showNameInput, setShowNameInput] = useState(!localStorage.getItem('fireworks_player_name'));
+  const [wsReconnectTrigger, setWsReconnectTrigger] = useState(0);
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.height = '100%';
+    document.body.style.height = '100%';
+    const root = document.getElementById('root');
+    if (root) {
+      root.style.height = '100%';
+    }
+  }, []);
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -118,14 +135,15 @@ const App: React.FC = () => {
 
     console.log("Connecting to WebSocket:", WS_URL);
     
-    // 建立连接
-    // 注意: 这里假设后端存在。如果后端不存在，连接会失败。
-    const socket = new WebSocket(`${WS_URL}?name=${encodeURIComponent(currentUser.name)}&color=${encodeURIComponent(currentUser.color)}`);
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.close();
+    }
+    
+    const socket = new WebSocket(WS_URL);
     wsRef.current = socket;
 
     socket.onopen = () => {
       console.log("WebSocket Connected");
-      // 可选: 发送加入房间事件，取决于后端协议是否需要显式 join
       socket.send(JSON.stringify({ type: 'join_room', payload: { name: currentUser.name, color: currentUser.color } }));
     };
 
@@ -177,7 +195,7 @@ const App: React.FC = () => {
     return () => {
       socket.close();
     };
-  }, [currentUser.name, currentUser.color]); // Re-run if user config changes (unlikely in this session)
+  }, [currentUser.name, currentUser.color, wsReconnectTrigger]);
 
 
   // ----------------------------------------------------------------
@@ -201,7 +219,6 @@ const App: React.FC = () => {
 
   const handleSendMessage = (text: string) => {
     if (USE_MOCK_DATA) {
-      // Mock Mode: 直接添加到本地状态
       const newMessage: ChatMessage = {
         id: Math.random().toString(36).substr(2, 9),
         playerId: currentUser.id,
@@ -212,7 +229,6 @@ const App: React.FC = () => {
       };
       setMessages((prev) => [...prev, newMessage]);
     } else {
-      // Backend Mode: 发送给服务器
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({
           type: 'chat_send',
@@ -222,8 +238,24 @@ const App: React.FC = () => {
     }
   };
 
+  const handleNameSubmit = (name: string, color: string) => {
+    localStorage.setItem('fireworks_player_name', name);
+    localStorage.setItem('fireworks_player_color', color);
+    setCurrentUser(prev => ({ ...prev, name, color }));
+    setShowNameInput(false);
+    setWsReconnectTrigger(prev => prev + 1);
+  };
+
+  const handleChangeName = () => {
+    setShowNameInput(true);
+  };
+
+  if (showNameInput) {
+    return <NameInput onSubmit={handleNameSubmit} defaultName={currentUser.name} defaultColor={currentUser.color} />;
+  }
+
   return (
-    <div className="relative w-full h-screen bg-slate-900 text-white overflow-hidden font-sans">
+    <div key="game-container" className="relative w-full h-screen m-0 p-0 bg-slate-900 text-white overflow-hidden font-sans">
       <FireworkCanvas 
         ref={canvasRef}
         onLaunch={handleFireworkLaunch} 
@@ -233,6 +265,7 @@ const App: React.FC = () => {
         players={players} 
         messages={messages} 
         onSendMessage={handleSendMessage}
+        onChangeName={handleChangeName}
       />
     </div>
   );

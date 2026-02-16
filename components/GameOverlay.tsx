@@ -5,6 +5,7 @@ interface GameOverlayProps {
   players: Player[];
   messages: ChatMessage[];
   onSendMessage: (text: string) => void;
+  onChangeName?: () => void;
 }
 
 // Icons
@@ -17,11 +18,14 @@ const MaximizeIcon = () => (
 const UsersIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
 );
+const EditIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+);
 const ChatIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
 );
 
-export const GameOverlay: React.FC<GameOverlayProps> = ({ players, messages, onSendMessage }) => {
+export const GameOverlay: React.FC<GameOverlayProps> = ({ players, messages, onSendMessage, onChangeName }) => {
   const [inputText, setInputText] = useState('');
   const [isPlayerListOpen, setPlayerListOpen] = useState(true);
   const [isChatOpen, setChatOpen] = useState(true);
@@ -75,6 +79,15 @@ export const GameOverlay: React.FC<GameOverlayProps> = ({ players, messages, onS
                       {player.name} {player.isCurrentUser && '(你)'}
                     </span>
                   </div>
+                  {player.isCurrentUser && onChangeName && (
+                    <button
+                      onClick={onChangeName}
+                      className="text-slate-400 hover:text-white transition-colors p-1 rounded hover:bg-white/10"
+                      title="修改名字"
+                    >
+                      <EditIcon />
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

@@ -8,9 +8,14 @@
     <style>
       body {
         margin: 0;
+        padding: 0;
         overflow: hidden;
         background-color: #0f172a; /* Slate 900 */
         touch-action: none; /* Prevent zoom/scroll on mobile */
+      }
+      html, body, #root {
+        width: 100%;
+        height: 100%;
       }
       canvas {
         display: block;
@@ -28,5 +33,6 @@
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
