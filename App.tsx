@@ -8,7 +8,7 @@ import { Player, ChatMessage } from './types';
 // 配置文件 / CONFIGURATION
 // ==========================================
 const USE_MOCK_DATA = false; // 切换为 false 以启用真实 WebSocket 连接
-const WS_URL = 'ws://localhost:9000/socket'; // 后端 WebSocket 地址
+const WS_URL = 'ws://101.43.237.181:9000/socket'; // 后端 WebSocket 地址
 
 // ==========================================
 // 辅助函数 / HELPERS
@@ -56,6 +56,25 @@ const App: React.FC = () => {
       root.style.height = '100%';
     }
   }, []);
+
+  useEffect(() => {
+    if (!showNameInput) {
+      const forceLayoutUpdate = () => {
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.height = '100%';
+        document.body.style.height = '100%';
+        const root = document.getElementById('root');
+        if (root) {
+          root.style.height = '100%';
+        }
+        window.dispatchEvent(new Event('resize'));
+      };
+      
+      forceLayoutUpdate();
+      setTimeout(forceLayoutUpdate, 0);
+      setTimeout(forceLayoutUpdate, 100);
+    }
+  }, [showNameInput]);
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -251,11 +270,28 @@ const App: React.FC = () => {
   };
 
   if (showNameInput) {
-    return <NameInput onSubmit={handleNameSubmit} defaultName={currentUser.name} defaultColor={currentUser.color} />;
+    return (
+      <>
+        <div key={`game-${wsReconnectTrigger}`} className="absolute inset-0 w-full h-full m-0 p-0 bg-slate-900 text-white overflow-hidden font-sans">
+          <FireworkCanvas 
+            ref={canvasRef}
+            onLaunch={handleFireworkLaunch} 
+            onExplode={handleExplosion} 
+          />
+          <GameOverlay 
+            players={players} 
+            messages={messages} 
+            onSendMessage={handleSendMessage}
+            onChangeName={handleChangeName}
+          />
+        </div>
+        <NameInput onSubmit={handleNameSubmit} defaultName={currentUser.name} defaultColor={currentUser.color} />
+      </>
+    );
   }
 
   return (
-    <div key="game-container" className="relative w-full h-screen m-0 p-0 bg-slate-900 text-white overflow-hidden font-sans">
+    <div key={`game-${wsReconnectTrigger}`} className="absolute inset-0 w-full h-full m-0 p-0 bg-slate-900 text-white overflow-hidden font-sans">
       <FireworkCanvas 
         ref={canvasRef}
         onLaunch={handleFireworkLaunch} 

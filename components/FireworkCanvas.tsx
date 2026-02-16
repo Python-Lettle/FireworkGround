@@ -287,11 +287,14 @@ export const FireworkCanvas = forwardRef<FireworkCanvasHandle, FireworkCanvasPro
     };
 
     window.addEventListener('resize', handleResize);
-    handleResize();
     
-    requestAnimationFrame(() => {
+    const resizeWithDelay = () => {
         handleResize();
-    });
+        setTimeout(handleResize, 0);
+        setTimeout(handleResize, 100);
+    };
+    
+    resizeWithDelay();
 
     return () => {
       window.removeEventListener('resize', handleResize);

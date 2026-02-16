@@ -38,7 +38,7 @@ export const NameInput: React.FC<NameInputProps> = ({ onSubmit, defaultName, def
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-slate-900 flex items-center justify-center p-4 z-50">
       <div className="bg-slate-800/80 backdrop-blur-md border border-white/10 rounded-2xl p-8 w-full max-w-md shadow-2xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">欢迎来到烟花房</h1>
